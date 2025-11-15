@@ -1,0 +1,68 @@
+###############################################
+#   MAVEN / JAVA
+###############################################
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+*.log
+logs/
+hs_err_pid*
+replay_pid*
+
+###############################################
+#   SPRING BOOT (evitar subir configuraciones sensibles)
+###############################################
+# Archivos sensibles de perfil
+application-dev.yml
+application-prod.yml
+
+# Si deseas permitir un template de ejemplo:
+# !application-template.yml
+
+###############################################
+#   DOCKER
+###############################################
+*.pid
+
+###############################################
+#   ECLIPSE / STS
+###############################################
+.project
+.classpath
+.settings/
+.apt_generated/
+.factorypath
+.springBeans
+.sts4-cache
+
+###############################################
+#   IntelliJ IDEA
+###############################################
+.idea/
+*.iws
+*.iml
+*.ipr
+
+###############################################
+#   NETBEANS
+###############################################
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+###############################################
+#   VS Code
+###############################################
+.vscode/
+
+###############################################
+#   OPERATING SYSTEM
+###############################################
+.DS_Store
+Thumbs.db
