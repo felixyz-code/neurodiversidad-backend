@@ -18,7 +18,8 @@ CREATE TABLE users (
   created_by      uuid,
   updated_at      timestamptz,
   updated_by      uuid,
-  deleted_at      timestamptz
+  deleted_at      timestamptz,
+  deleted_by      uuid
 );
 
 -- unicidad "activos": permite reusar email/username si el registro está borrado (deleted_at IS NOT NULL)
@@ -80,18 +81,18 @@ CREATE INDEX ix_patients_deleted_at ON patients(deleted_at);
 
 -- 4) Citas
 CREATE TABLE appointments (
-  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  specialist_id uuid NOT NULL REFERENCES specialists(id) ON DELETE RESTRICT,
-  patient_id    uuid NOT NULL REFERENCES patients(id) ON DELETE RESTRICT,
-  start_at      timestamptz NOT NULL,
-  end_at        timestamptz NOT NULL,
-  status        text NOT NULL CHECK (status IN ('PENDING','CONFIRMED','COMPLETED','CANCELED')),
-  notes         text,
-  created_at    timestamptz NOT NULL DEFAULT now(),
-  created_by    uuid REFERENCES users(id) ON DELETE SET NULL,
-  updated_at    timestamptz,
-  updated_by    uuid REFERENCES users(id) ON DELETE SET NULL,
-  deleted_at    timestamptz
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  specialist_id    uuid NOT NULL REFERENCES specialists(id) ON DELETE RESTRICT,
+  patient_id       uuid NOT NULL REFERENCES patients(id) ON DELETE RESTRICT,
+  start_at         timestamptz NOT NULL,
+  status           text NOT NULL CHECK (status IN ('PENDING','CONFIRMED','COMPLETED','CANCELED')),
+  notes            text,
+  duration_minutes integer NOT NULL DEFAULT 60,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  created_by       uuid REFERENCES users(id) ON DELETE SET NULL,
+  updated_at       timestamptz,
+  updated_by       uuid REFERENCES users(id) ON DELETE SET NULL,
+  deleted_at       timestamptz
 );
 
 -- índices para búsquedas comunes

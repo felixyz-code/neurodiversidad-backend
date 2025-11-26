@@ -34,8 +34,8 @@ public class Appointment {
 	@Column(name = "start_at", nullable = false)
 	private OffsetDateTime startAt;
 
-	@Column(name = "end_at", nullable = false)
-	private OffsetDateTime endAt;
+	@Column(name = "duration_minutes", nullable = false)
+	private Integer durationMinutes;
 
 	@Column(nullable = false)
 	private String status; // PENDING, CONFIRMED, COMPLETED, CANCELED
@@ -56,4 +56,8 @@ public class Appointment {
 
 	@Column(name = "deleted_at")
 	private OffsetDateTime deletedAt;
+
+	public OffsetDateTime getEndAt() {
+		return startAt != null && durationMinutes != null ? startAt.plusMinutes(durationMinutes) : null;
+	}
 }

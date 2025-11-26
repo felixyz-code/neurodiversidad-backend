@@ -56,6 +56,9 @@ public class User {
 	@Column(name = "deleted_at")
 	private OffsetDateTime deletedAt;
 	
+	@Column(name = "deleted_by")
+	private UUID deletedBy;
+	
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(
 	        name = "user_roles",

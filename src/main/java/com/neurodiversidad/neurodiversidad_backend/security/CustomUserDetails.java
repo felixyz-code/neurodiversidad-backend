@@ -13,6 +13,9 @@ import java.util.stream.Collectors;
 
 public class CustomUserDetails implements UserDetails {
 
+	// Atributo serialVersionUID de tipo long
+	private static final long serialVersionUID = 2160185297081450015L;
+
 	private final UUID id;
 	private final String username;
 	private final String password;

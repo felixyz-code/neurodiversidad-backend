@@ -1,0 +1,2 @@
+ALTER TABLE appointments
+ADD COLUMN start_at TIMESTAMPTZ NOT NULL;

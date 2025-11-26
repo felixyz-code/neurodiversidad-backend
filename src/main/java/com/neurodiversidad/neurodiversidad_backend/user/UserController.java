@@ -1,25 +1,74 @@
 package com.neurodiversidad.neurodiversidad_backend.user;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.neurodiversidad.neurodiversidad_backend.security.CustomUserDetails;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/users")
-@Tag(name = "Users", description = "Operaciones básicas con usuarios")
+@Tag(name = "Users", description = "Operaciones con usuarios del sistema")
+@RequiredArgsConstructor
 public class UserController {
 
-	private final UserRepository userRepository;
+    private final UserService userService;
 
-	public UserController(UserRepository userRepository) {
-		this.userRepository = userRepository;
-	}
+    @GetMapping
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL','ASISTENTE_GENERAL')")
+    @Operation(summary = "Lista usuarios, con filtro opcional por username")
+    public List<UserDTO> getUsers(
+            @RequestParam(required = false) String username
+    ) {
+        return userService.findUsers(username);
+    }
 
-	@GetMapping
-	@Operation(summary = "Lista todos los usuarios registrados")
-	public List<UserDTO> getUsers() {
-		return userRepository.findAll().stream().map(UserMapper::toDTO).toList();
-	}
+    @PostMapping
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL','ASISTENTE_GENERAL')")
+    @Operation(summary = "Crea un nuevo usuario")
+    public UserDTO createUser(
+            @RequestBody UserCreateRequest request,
+            @AuthenticationPrincipal CustomUserDetails currentUser
+    ) {
+    	UUID createdBy = currentUser != null ? currentUser.getId() : null;
+        return userService.createUser(request, createdBy);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL','ASISTENTE_GENERAL')")
+    @Operation(summary = "Actualiza un usuario existente")
+    public UserDTO updateUser(
+            @PathVariable UUID id,
+            @RequestBody UserUpdateRequest request,
+            @AuthenticationPrincipal CustomUserDetails currentUser
+    ) {
+    	UUID modifiedBy = currentUser != null ? currentUser.getId() : null;
+        return userService.updateUser(id, request, modifiedBy);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL','ASISTENTE_GENERAL')")
+    @Operation(summary = "Elimina (lógicamente) un usuario")
+    public void deleteUser(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal CustomUserDetails currentUser
+    ) {
+    	UUID deletedBy  = currentUser != null ? currentUser.getId() : null;
+        userService.deleteUser(id, deletedBy);
+    }
 }
