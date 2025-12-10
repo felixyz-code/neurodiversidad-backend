@@ -1,0 +1,18 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    # sin URL, user ni password aquí
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:cambia-esta-clave-super-secreta-32-chars-minimo}
+    expiration-ms: 3600000
