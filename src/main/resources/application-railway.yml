@@ -1,9 +1,11 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   datasource:
-    # sin URL, user ni password aquí
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -11,8 +13,10 @@ spring:
       hibernate.jdbc.time_zone: UTC
   flyway:
     enabled: true
-
+  jackson:
+    time-zone: America/Hermosillo
+      
 security:
   jwt:
-    secret: ${JWT_SECRET:cambia-esta-clave-super-secreta-32-chars-minimo}
+    secret: ${JWT_SECRET}
     expiration-ms: 3600000

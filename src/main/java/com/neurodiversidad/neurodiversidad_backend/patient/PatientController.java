@@ -27,7 +27,7 @@ public class PatientController {
 	 * /api/v1/patients?search=juan&page=0&size=10
 	 */
 	@GetMapping
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'ASISTENTE', 'TERAPEUTA')")
+	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'ASISTENTE')")
 	public Page<PatientDto> searchPatients(@RequestParam(required = false, defaultValue = "") String search,
 			@RequestParam(required = false, defaultValue = "0") int page,
 			@RequestParam(required = false, defaultValue = "20") int size) {
@@ -38,7 +38,7 @@ public class PatientController {
 	 * Obtener detalle de un paciente por id. GET /api/v1/patients/{id}
 	 */
 	@GetMapping("/{id}")
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'ASISTENTE', 'TERAPEUTA')")
+	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'ASISTENTE')")
 	public PatientDto getPatientById(@PathVariable UUID id) {
 		return patientService.getPatientById(id);
 	}
@@ -47,7 +47,7 @@ public class PatientController {
 	 * Crear un nuevo paciente. POST /api/v1/patients
 	 */
 	@PostMapping
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'ASISTENTE', 'TERAPEUTA')")
+	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'ASISTENTE')")
 	public ResponseEntity<PatientDto> createPatient(@Valid @RequestBody CreatePatientRequest request,
 			@AuthenticationPrincipal CustomUserDetails currentUser) {
 
@@ -64,7 +64,7 @@ public class PatientController {
 	 * Actualizar un paciente. PUT /api/v1/patients/{id}
 	 */
 	@PutMapping("/{id}")
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'ASISTENTE', 'TERAPEUTA')")
+	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'ASISTENTE')")
 	public PatientDto updatePatient(@PathVariable UUID id, @Valid @RequestBody UpdatePatientRequest request,
 			@AuthenticationPrincipal CustomUserDetails currentUser) {
 		UUID updatedBy = currentUser != null ? currentUser.getId() : null;
