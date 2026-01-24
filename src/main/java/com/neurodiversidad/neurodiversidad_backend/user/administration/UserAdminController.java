@@ -21,13 +21,24 @@ public class UserAdminController {
 
 	/**
 	 * Buscar usuarios con filtros opcionales. GET
-	 * /api/v1/admin/users?text=...&enabled=true|false&roleName=ROLE_ESPECIALISTA
+	 * /api/v1/admin/users?text=...&enabled=true|false&roleName=ROLE_ESPECIALISTA&status=active|inactive|deleted
 	 */
 	@GetMapping
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+	@PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR_GENERAL', 'ROLE_ASISTENTE_GENERAL', 'ROLE_RRHH')")
 	public ResponseEntity<List<UserAdministrationDTO>> searchUsers(@RequestParam(required = false) String text,
-			@RequestParam(required = false) Boolean enabled, @RequestParam(required = false) String roleName) {
-		List<UserAdministrationDTO> list = userAdminService.searchUsers(text, enabled, roleName);
+			@RequestParam(required = false) Boolean enabled, @RequestParam(required = false) String roleName,
+			@RequestParam(required = false) String status) {
+		List<UserAdministrationDTO> list = userAdminService.searchUsers(text, enabled, roleName, status);
+		return ResponseEntity.ok(list);
+	}
+
+	/**
+	 * Resolver usuarios por IDs (para audit trail).
+	 */
+	@PostMapping("/resolve")
+	@PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR_GENERAL', 'ROLE_ASISTENTE_GENERAL', 'ROLE_RRHH')")
+	public ResponseEntity<List<UserIdNameDTO>> resolveUsers(@Valid @RequestBody UserIdsRequest request) {
+		List<UserIdNameDTO> list = userAdminService.resolveUsersByIds(request.getUserIds());
 		return ResponseEntity.ok(list);
 	}
 
@@ -35,7 +46,7 @@ public class UserAdminController {
 	 * Obtener usuario por id GET /api/v1/admin/users/{id}
 	 */
 	@GetMapping("/{id}")
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+	@PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR_GENERAL', 'ROLE_ASISTENTE_GENERAL', 'ROLE_RRHH')")
 	public ResponseEntity<UserAdministrationDTO> getUser(@PathVariable UUID id) {
 		UserAdministrationDTO dto = userAdminService.getUserById(id);
 		return ResponseEntity.ok(dto);
@@ -45,7 +56,7 @@ public class UserAdminController {
 	 * Crear usuario POST /api/v1/admin/users
 	 */
 	@PostMapping
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+	@PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR_GENERAL', 'ROLE_ASISTENTE_GENERAL', 'ROLE_RRHH')")
 	public ResponseEntity<UserAdministrationDTO> createUser(@Valid @RequestBody CreateUserRequest request,
 			@AuthenticationPrincipal CustomUserDetails currentUser) {
 		UUID currentUserId = currentUser != null ? currentUser.getId() : null;
@@ -58,7 +69,7 @@ public class UserAdminController {
 	 * Actualizar usuario PUT /api/v1/admin/users/{id}
 	 */
 	@PutMapping("/{id}")
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+	@PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR_GENERAL', 'ROLE_ASISTENTE_GENERAL', 'ROLE_RRHH')")
 	public ResponseEntity<UserAdministrationDTO> updateUser(@PathVariable UUID id,
 			@Valid @RequestBody UpdateUserRequest request, @AuthenticationPrincipal CustomUserDetails currentUser) {
 		UUID currentUserId = currentUser != null ? currentUser.getId() : null;
@@ -70,7 +81,7 @@ public class UserAdminController {
 	 * Borrado lógico DELETE /api/v1/admin/users/{id}
 	 */
 	@DeleteMapping("/{id}")
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+	@PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR_GENERAL', 'ROLE_ASISTENTE_GENERAL', 'ROLE_RRHH')")
 	public ResponseEntity<Void> deleteUser(@PathVariable UUID id,
 			@AuthenticationPrincipal CustomUserDetails currentUser) {
 		UUID currentUserId = currentUser != null ? currentUser.getId() : null;
@@ -83,7 +94,7 @@ public class UserAdminController {
 	 * /api/v1/admin/users/{id}/restore
 	 */
 	@PatchMapping("/{id}/restore")
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+	@PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR_GENERAL', 'ROLE_ASISTENTE_GENERAL', 'ROLE_RRHH')")
 	public ResponseEntity<Void> restoreUser(@PathVariable UUID id,
 			@AuthenticationPrincipal CustomUserDetails currentUser) {
 		UUID currentUserId = currentUser != null ? currentUser.getId() : null;

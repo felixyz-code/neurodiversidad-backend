@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -25,7 +27,11 @@ public class Assistant {
 	@JoinColumn(name = "user_id", nullable = false, unique = true)
 	private User user;
 
-	@ManyToOne(optional = false)
-	@JoinColumn(name = "specialist_id", nullable = false)
-	private Specialist specialist;
+	@ManyToMany
+	@JoinTable(
+			name = "assistant_specialists",
+			joinColumns = @JoinColumn(name = "assistant_id"),
+			inverseJoinColumns = @JoinColumn(name = "specialist_id")
+	)
+	private Set<Specialist> specialists = new HashSet<>();
 }

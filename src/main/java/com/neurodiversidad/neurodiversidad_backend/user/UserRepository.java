@@ -26,7 +26,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 			SELECT DISTINCT u
 			FROM User u
 			LEFT JOIN u.roles r
-			WHERE u.deletedAt IS NULL
+			WHERE (
+			       :deleted IS NULL
+			       OR (:deleted = true AND u.deletedAt IS NOT NULL)
+			       OR (:deleted = false AND u.deletedAt IS NULL)
+			)
 			  AND (:enabled IS NULL OR u.enabled = :enabled)
 			  AND (:roleName IS NULL OR r.name = :roleName)
 			  AND (
@@ -38,5 +42,21 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 			ORDER BY u.name ASC
 			""")
 	List<User> search(@Param("text") String text, @Param("enabled") Boolean enabled,
-			@Param("roleName") String roleName);
+			@Param("roleName") String roleName, @Param("deleted") Boolean deleted);
+
+	@Query("""
+			SELECT DISTINCT u
+			FROM User u
+			LEFT JOIN u.roles r
+			WHERE (
+			       :deleted IS NULL
+			       OR (:deleted = true AND u.deletedAt IS NOT NULL)
+			       OR (:deleted = false AND u.deletedAt IS NULL)
+			)
+			  AND (:enabled IS NULL OR u.enabled = :enabled)
+			  AND (:roleName IS NULL OR r.name = :roleName)
+			ORDER BY u.name ASC
+			""")
+	List<User> searchWithoutText(@Param("enabled") Boolean enabled,
+			@Param("roleName") String roleName, @Param("deleted") Boolean deleted);
 }

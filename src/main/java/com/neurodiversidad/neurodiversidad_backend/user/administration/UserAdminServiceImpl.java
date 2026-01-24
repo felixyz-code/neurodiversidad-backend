@@ -156,12 +156,51 @@ public class UserAdminServiceImpl implements UserAdminService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserAdministrationDTO> searchUsers(String text, Boolean enabled, String roleName) {
-        List<User> users = userRepository.search(
-                (text != null && !text.isBlank()) ? text : null,
-                enabled,
-                (roleName != null && !roleName.isBlank()) ? roleName : null
-        );
+    public List<UserAdministrationDTO> searchUsers(String text, Boolean enabled, String roleName, String status) {
+        String normalizedStatus = status == null ? null : status.trim().toLowerCase();
+        Boolean deleted = null;
+
+        if ("active".equals(normalizedStatus)) {
+            deleted = Boolean.FALSE;
+            enabled = Boolean.TRUE;
+        } else if ("inactive".equals(normalizedStatus)) {
+            deleted = Boolean.FALSE;
+            enabled = Boolean.FALSE;
+        } else if ("deleted".equals(normalizedStatus)) {
+            deleted = Boolean.TRUE;
+            enabled = null;
+        } else {
+            deleted = Boolean.FALSE;
+        }
+
+        List<User> users;
+        if (text != null && !text.isBlank()) {
+            users = userRepository.search(
+                    text,
+                    enabled,
+                    (roleName != null && !roleName.isBlank()) ? roleName : null,
+                    deleted
+            );
+        } else {
+            users = userRepository.searchWithoutText(
+                    enabled,
+                    (roleName != null && !roleName.isBlank()) ? roleName : null,
+                    deleted
+            );
+        }
         return users.stream().map(userAdminMapper::toDto).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserIdNameDTO> resolveUsersByIds(List<UUID> userIds) {
+        List<User> users = userRepository.findAllById(userIds);
+        return users.stream()
+                .map(user -> UserIdNameDTO.builder()
+                        .id(user.getId())
+                        .name(user.getName())
+                        .username(user.getUsername())
+                        .build())
+                .toList();
     }
 }

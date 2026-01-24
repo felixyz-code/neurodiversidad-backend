@@ -3,6 +3,7 @@ package com.neurodiversidad.neurodiversidad_backend.appointment;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
 
 public interface AppointmentService {
 
@@ -14,9 +15,13 @@ public interface AppointmentService {
 
     AppointmentDto getAppointmentById(UUID id);
 
-    List<AppointmentDto> getAppointmentsForSpecialist(
-            UUID specialistId,
+    Page<AppointmentDto> searchAppointments(
             OffsetDateTime from,
-            OffsetDateTime to
+            OffsetDateTime to,
+            String status,
+            String search,
+            List<UUID> specialistIds,
+            int page,
+            int size
     );
 }

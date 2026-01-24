@@ -19,6 +19,7 @@ import java.util.UUID;
 public class SpecialistAdminServiceImpl implements SpecialistAdminService {
 
     private final SpecialistRepository specialistRepository;
+    private final AssistantRepository assistantRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final SpecialistMapper specialistMapper;
@@ -94,5 +95,39 @@ public class SpecialistAdminServiceImpl implements SpecialistAdminService {
         Specialist specialist = specialistRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Especialista no encontrado"));
         return specialistMapper.toDto(specialist);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SpecialistDto getByUserId(UUID userId) {
+        Specialist specialist = specialistRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Especialista no encontrado para el usuario"));
+        return specialistMapper.toDto(specialist);
+    }
+
+    @Override
+    public void updateAssistants(UUID specialistId, List<UUID> assistantIds) {
+        Specialist specialist = specialistRepository.findById(specialistId)
+                .orElseThrow(() -> new IllegalArgumentException("Especialista no encontrado"));
+
+        List<Assistant> current = assistantRepository.findBySpecialists_Id(specialistId);
+        List<Assistant> desired = assistantRepository.findAllById(assistantIds);
+
+        if (desired.size() != assistantIds.size()) {
+            throw new IllegalArgumentException("Algunos asistentes no existen");
+        }
+
+        for (Assistant assistant : current) {
+            if (!assistantIds.contains(assistant.getId())) {
+                assistant.getSpecialists().remove(specialist);
+            }
+        }
+
+        for (Assistant assistant : desired) {
+            assistant.getSpecialists().add(specialist);
+        }
+
+        assistantRepository.saveAll(current);
+        assistantRepository.saveAll(desired);
     }
 }

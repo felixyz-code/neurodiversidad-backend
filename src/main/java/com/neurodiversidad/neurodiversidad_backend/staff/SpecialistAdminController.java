@@ -19,6 +19,7 @@ import java.util.UUID;
 public class SpecialistAdminController {
 
     private final SpecialistAdminService specialistAdminService;
+    private final AssistantAdminService assistantAdminService;
 
     /**
      * Crea y asocia un especialista a un usuario del sistema.
@@ -57,5 +58,39 @@ public class SpecialistAdminController {
     @Operation(summary = "Obtiene un especialista por su ID")
     public SpecialistDto getSpecialistById(@PathVariable UUID id) {
         return specialistAdminService.getById(id);
+    }
+
+    /**
+     * Obtener especialista por userId.
+     */
+    @GetMapping("/by-user/{userId}")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @Operation(summary = "Obtiene un especialista por el ID de usuario")
+    public SpecialistDto getSpecialistByUserId(@PathVariable UUID userId) {
+        return specialistAdminService.getByUserId(userId);
+    }
+
+    /**
+     * Lista asistentes asociados a un especialista.
+     */
+    @GetMapping("/{id}/assistants")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @Operation(summary = "Lista asistentes asociados a un especialista")
+    public List<AssistantDto> listAssistantsForSpecialist(@PathVariable UUID id) {
+        return assistantAdminService.listAssistantsForSpecialist(id);
+    }
+
+    /**
+     * Reemplaza la lista de asistentes asociados a un especialista.
+     */
+    @PutMapping("/{id}/assistants")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @Operation(summary = "Actualiza los asistentes asociados a un especialista")
+    public List<AssistantDto> updateAssistantsForSpecialist(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateSpecialistAssistantsRequest request
+    ) {
+        specialistAdminService.updateAssistants(id, request.getAssistantIds());
+        return assistantAdminService.listAssistantsForSpecialist(id);
     }
 }

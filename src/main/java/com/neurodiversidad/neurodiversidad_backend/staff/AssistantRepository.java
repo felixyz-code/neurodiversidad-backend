@@ -10,5 +10,5 @@ public interface AssistantRepository extends JpaRepository<Assistant, UUID> {
 
 	Optional<Assistant> findByUserId(UUID userId);
 
-	List<Assistant> findBySpecialistId(UUID specialistId);
+	List<Assistant> findBySpecialists_Id(UUID specialistId);
 }

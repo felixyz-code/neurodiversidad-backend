@@ -6,6 +6,8 @@ import com.neurodiversidad.neurodiversidad_backend.patient.PatientNotFoundExcept
 import com.neurodiversidad.neurodiversidad_backend.staff.Specialist;
 import com.neurodiversidad.neurodiversidad_backend.staff.SpecialistRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,7 +78,15 @@ public class AppointmentServiceImpl implements AppointmentService {
 	        }
 	    }
 
-	    // 5) metadatos
+	    // 5) specialistId (solo si viene)
+	    if (request.getSpecialistId() != null) {
+	        Specialist specialist = specialistRepository.findById(request.getSpecialistId())
+	                .orElseThrow(() -> new IllegalArgumentException(
+	                        "Especialista no encontrado con id: " + request.getSpecialistId()));
+	        appointment.setSpecialist(specialist);
+	    }
+
+	    // 6) metadatos
 	    appointment.setUpdatedAt(OffsetDateTime.now());
 	    appointment.setUpdatedBy(currentUserId);
 
@@ -107,14 +117,50 @@ public class AppointmentServiceImpl implements AppointmentService {
 		return appointmentMapper.toDto(appointment);
 	}
 
-	@Override
-	@Transactional(readOnly = true)
-	public List<AppointmentDto> getAppointmentsForSpecialist(UUID specialistId, OffsetDateTime from,
-			OffsetDateTime to) {
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AppointmentDto> searchAppointments(OffsetDateTime from, OffsetDateTime to, String status,
+            String search, List<UUID> specialistIds, int page, int size) {
 
-		List<Appointment> appointments = appointmentRepository
-				.findBySpecialistIdAndStartAtBetweenAndDeletedAtIsNull(specialistId, from, to);
+        if (from == null || to == null) {
+            throw new IllegalArgumentException("Rango de fechas requerido");
+        }
 
-		return appointments.stream().map(appointmentMapper::toDto).toList();
-	}
+        String normalizedStatus = (status == null || status.isBlank()) ? null : status.toUpperCase();
+        if (normalizedStatus != null) {
+            switch (normalizedStatus) {
+                case "PENDING", "CONFIRMED", "COMPLETED", "CANCELED" -> { }
+                default -> throw new IllegalArgumentException("Estado de cita invalido: " + status);
+            }
+        }
+
+        String normalizedSearch = (search == null || search.isBlank()) ? null : search;
+
+        List<UUID> safeSpecialistIds = (specialistIds == null) ? List.of(new UUID(0L, 0L)) : specialistIds;
+        boolean filterBySpecialist = specialistIds != null;
+
+        Page<Appointment> results;
+        if (normalizedSearch == null) {
+            results = appointmentRepository.searchAppointmentsWithoutSearch(
+                    from,
+                    to,
+                    normalizedStatus,
+                    safeSpecialistIds,
+                    filterBySpecialist,
+                    PageRequest.of(page, size)
+            );
+        } else {
+            results = appointmentRepository.searchAppointments(
+                    from,
+                    to,
+                    normalizedStatus,
+                    normalizedSearch,
+                    safeSpecialistIds,
+                    filterBySpecialist,
+                    PageRequest.of(page, size)
+            );
+        }
+
+        return results.map(appointmentMapper::toDto);
+    }
 }

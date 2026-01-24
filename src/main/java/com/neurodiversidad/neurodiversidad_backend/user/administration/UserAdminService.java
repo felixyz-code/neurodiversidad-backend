@@ -15,5 +15,7 @@ public interface UserAdminService {
 
 	    UserAdministrationDTO getUserById(UUID id);
 
-	    List<UserAdministrationDTO> searchUsers(String text, Boolean enabled, String roleName);
+    List<UserAdministrationDTO> searchUsers(String text, Boolean enabled, String roleName, String status);
+
+    List<UserIdNameDTO> resolveUsersByIds(List<java.util.UUID> userIds);
 }
