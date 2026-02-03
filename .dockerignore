@@ -1,0 +1,30 @@
+# Build outputs
+target/
+build/
+
+# Git
+.git/
+.gitignore
+
+# Environment / secrets
+.env
+.env.*
+*.env
+
+# IDEs / editors
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node (por si acaso)
+node_modules/
+
+# Tests (opcional, si no los usas en build)
+**/test/
