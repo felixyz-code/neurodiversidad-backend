@@ -15,8 +15,8 @@ replay_pid*
 #   SPRING BOOT (evitar subir configuraciones sensibles)
 ###############################################
 # Archivos sensibles de perfil
-application-dev.yml
-application-prod.yml
+src/main/resources/application-*.yml
+!src/main/resources/application-prod.yml
 
 # Si deseas permitir un template de ejemplo:
 # !application-template.yml
