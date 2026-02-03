@@ -21,6 +21,7 @@ public interface AppointmentService {
             String status,
             String search,
             List<UUID> specialistIds,
+            List<String> sort,
             int page,
             int size
     );

@@ -27,8 +27,8 @@ public class UserAdminController {
 	@PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR_GENERAL', 'ROLE_ASISTENTE_GENERAL', 'ROLE_RRHH')")
 	public ResponseEntity<List<UserAdministrationDTO>> searchUsers(@RequestParam(required = false) String text,
 			@RequestParam(required = false) Boolean enabled, @RequestParam(required = false) String roleName,
-			@RequestParam(required = false) String status) {
-		List<UserAdministrationDTO> list = userAdminService.searchUsers(text, enabled, roleName, status);
+			@RequestParam(required = false) String status, @RequestParam(required = false) List<String> sort) {
+		List<UserAdministrationDTO> list = userAdminService.searchUsers(text, enabled, roleName, status, sort);
 		return ResponseEntity.ok(list);
 	}
 
@@ -36,10 +36,24 @@ public class UserAdminController {
 	 * Resolver usuarios por IDs (para audit trail).
 	 */
 	@PostMapping("/resolve")
-	@PreAuthorize("hasAnyAuthority('ROLE_DIRECTOR_GENERAL', 'ROLE_ASISTENTE_GENERAL', 'ROLE_RRHH')")
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<List<UserIdNameDTO>> resolveUsers(@Valid @RequestBody UserIdsRequest request) {
 		List<UserIdNameDTO> list = userAdminService.resolveUsersByIds(request.getUserIds());
 		return ResponseEntity.ok(list);
+	}
+
+	/**
+	 * Validar disponibilidad de username/email.
+	 * GET /api/v1/admin/users/availability?username=...&email=...&excludeId=...
+	 */
+	@GetMapping("/availability")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<UserAvailabilityDTO> checkAvailability(
+			@RequestParam(required = false) String username,
+			@RequestParam(required = false) String email,
+			@RequestParam(required = false) UUID excludeId) {
+		UserAvailabilityDTO dto = userAdminService.checkAvailability(username, email, excludeId);
+		return ResponseEntity.ok(dto);
 	}
 
 	/**

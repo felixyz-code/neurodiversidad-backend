@@ -25,7 +25,7 @@ public class SpecialistAdminController {
      * Crea y asocia un especialista a un usuario del sistema.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH', 'ESPECIALISTA', 'ASISTENTE_ESPECIALISTA')")
     @Operation(summary = "Registra un especialista asociado a un usuario del sistema")
     public SpecialistDto createSpecialist(
             @Valid @RequestBody CreateSpecialistRequest request,
@@ -41,7 +41,7 @@ public class SpecialistAdminController {
      * GET /api/v1/staff/specialists?name=Consuelo
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH', 'ESPECIALISTA', 'ASISTENTE_ESPECIALISTA')")
     @Operation(summary = "Busca especialistas por especialidad o nombre")
     public List<SpecialistDto> searchSpecialists(
             @RequestParam(required = false) String specialty,
@@ -54,7 +54,7 @@ public class SpecialistAdminController {
      * Obtener especialista por ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH', 'ESPECIALISTA', 'ASISTENTE_ESPECIALISTA')")
     @Operation(summary = "Obtiene un especialista por su ID")
     public SpecialistDto getSpecialistById(@PathVariable UUID id) {
         return specialistAdminService.getById(id);
@@ -64,7 +64,7 @@ public class SpecialistAdminController {
      * Obtener especialista por userId.
      */
     @GetMapping("/by-user/{userId}")
-    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH', 'ESPECIALISTA', 'ASISTENTE_ESPECIALISTA')")
     @Operation(summary = "Obtiene un especialista por el ID de usuario")
     public SpecialistDto getSpecialistByUserId(@PathVariable UUID userId) {
         return specialistAdminService.getByUserId(userId);
@@ -74,7 +74,7 @@ public class SpecialistAdminController {
      * Lista asistentes asociados a un especialista.
      */
     @GetMapping("/{id}/assistants")
-    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH', 'ESPECIALISTA', 'ASISTENTE_ESPECIALISTA')")
     @Operation(summary = "Lista asistentes asociados a un especialista")
     public List<AssistantDto> listAssistantsForSpecialist(@PathVariable UUID id) {
         return assistantAdminService.listAssistantsForSpecialist(id);
@@ -84,7 +84,7 @@ public class SpecialistAdminController {
      * Reemplaza la lista de asistentes asociados a un especialista.
      */
     @PutMapping("/{id}/assistants")
-    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH', 'ESPECIALISTA', 'ASISTENTE_ESPECIALISTA')")
     @Operation(summary = "Actualiza los asistentes asociados a un especialista")
     public List<AssistantDto> updateAssistantsForSpecialist(
             @PathVariable UUID id,
@@ -94,3 +94,4 @@ public class SpecialistAdminController {
         return assistantAdminService.listAssistantsForSpecialist(id);
     }
 }
+

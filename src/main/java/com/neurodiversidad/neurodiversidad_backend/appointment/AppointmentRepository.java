@@ -35,9 +35,76 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                    :filterBySpecialist = false
                    OR (s.id IN :specialistIds)
               )
-            ORDER BY a.startAt ASC
             """)
     Page<Appointment> searchAppointments(
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to,
+            @Param("status") String status,
+            @Param("search") String search,
+            @Param("specialistIds") List<UUID> specialistIds,
+            @Param("filterBySpecialist") boolean filterBySpecialist,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT a
+            FROM Appointment a
+            JOIN a.patient p
+            JOIN a.specialist s
+            WHERE a.deletedAt IS NULL
+              AND a.startAt >= :from
+              AND a.startAt <= :to
+              AND (:status IS NULL OR a.status = :status)
+              AND (:search IS NULL OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :search, '%')))
+              AND (
+                   :filterBySpecialist = false
+                   OR (s.id IN :specialistIds)
+              )
+            ORDER BY
+              CASE a.status
+                WHEN 'PENDING' THEN 1
+                WHEN 'CONFIRMED' THEN 2
+                WHEN 'COMPLETED' THEN 3
+                WHEN 'CANCELED' THEN 4
+                ELSE 99
+              END ASC,
+              a.startAt ASC
+            """)
+    Page<Appointment> searchAppointmentsStatusOrderAsc(
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to,
+            @Param("status") String status,
+            @Param("search") String search,
+            @Param("specialistIds") List<UUID> specialistIds,
+            @Param("filterBySpecialist") boolean filterBySpecialist,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT a
+            FROM Appointment a
+            JOIN a.patient p
+            JOIN a.specialist s
+            WHERE a.deletedAt IS NULL
+              AND a.startAt >= :from
+              AND a.startAt <= :to
+              AND (:status IS NULL OR a.status = :status)
+              AND (:search IS NULL OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :search, '%')))
+              AND (
+                   :filterBySpecialist = false
+                   OR (s.id IN :specialistIds)
+              )
+            ORDER BY
+              CASE a.status
+                WHEN 'PENDING' THEN 1
+                WHEN 'CONFIRMED' THEN 2
+                WHEN 'COMPLETED' THEN 3
+                WHEN 'CANCELED' THEN 4
+                ELSE 99
+              END DESC,
+              a.startAt ASC
+            """)
+    Page<Appointment> searchAppointmentsStatusOrderDesc(
             @Param("from") OffsetDateTime from,
             @Param("to") OffsetDateTime to,
             @Param("status") String status,
@@ -60,9 +127,72 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                    :filterBySpecialist = false
                    OR (s.id IN :specialistIds)
               )
-            ORDER BY a.startAt ASC
             """)
     Page<Appointment> searchAppointmentsWithoutSearch(
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to,
+            @Param("status") String status,
+            @Param("specialistIds") List<UUID> specialistIds,
+            @Param("filterBySpecialist") boolean filterBySpecialist,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT a
+            FROM Appointment a
+            JOIN a.patient p
+            JOIN a.specialist s
+            WHERE a.deletedAt IS NULL
+              AND a.startAt >= :from
+              AND a.startAt <= :to
+              AND (:status IS NULL OR a.status = :status)
+              AND (
+                   :filterBySpecialist = false
+                   OR (s.id IN :specialistIds)
+              )
+            ORDER BY
+              CASE a.status
+                WHEN 'PENDING' THEN 1
+                WHEN 'CONFIRMED' THEN 2
+                WHEN 'COMPLETED' THEN 3
+                WHEN 'CANCELED' THEN 4
+                ELSE 99
+              END ASC,
+              a.startAt ASC
+            """)
+    Page<Appointment> searchAppointmentsStatusOrderAscWithoutSearch(
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to,
+            @Param("status") String status,
+            @Param("specialistIds") List<UUID> specialistIds,
+            @Param("filterBySpecialist") boolean filterBySpecialist,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT a
+            FROM Appointment a
+            JOIN a.patient p
+            JOIN a.specialist s
+            WHERE a.deletedAt IS NULL
+              AND a.startAt >= :from
+              AND a.startAt <= :to
+              AND (:status IS NULL OR a.status = :status)
+              AND (
+                   :filterBySpecialist = false
+                   OR (s.id IN :specialistIds)
+              )
+            ORDER BY
+              CASE a.status
+                WHEN 'PENDING' THEN 1
+                WHEN 'CONFIRMED' THEN 2
+                WHEN 'COMPLETED' THEN 3
+                WHEN 'CANCELED' THEN 4
+                ELSE 99
+              END DESC,
+              a.startAt ASC
+            """)
+    Page<Appointment> searchAppointmentsStatusOrderDescWithoutSearch(
             @Param("from") OffsetDateTime from,
             @Param("to") OffsetDateTime to,
             @Param("status") String status,

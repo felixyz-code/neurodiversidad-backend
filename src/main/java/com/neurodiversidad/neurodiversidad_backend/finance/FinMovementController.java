@@ -9,8 +9,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -25,7 +25,7 @@ public class FinMovementController {
 	 * /api/v1/finances/movements
 	 */
 	@PostMapping
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS')")
+	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS', 'ASISTENTE_GENERAL')")
 	public ResponseEntity<FinMovementDto> createMovement(@Valid @RequestBody CreateFinMovementRequest request,
 			@AuthenticationPrincipal CustomUserDetails currentUser) {
 
@@ -40,7 +40,7 @@ public class FinMovementController {
 	 * Obtener movimiento por ID GET /api/v1/finances/movements/{id}
 	 */
 	@GetMapping("/{id}")
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS')")
+	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS', 'ASISTENTE_GENERAL')")
 	public ResponseEntity<FinMovementDto> getMovementById(@PathVariable UUID id) {
 		FinMovementDto dto = finMovementService.getMovementById(id);
 		return ResponseEntity.ok(dto);
@@ -48,25 +48,64 @@ public class FinMovementController {
 
 	/**
 	 * Buscar movimientos por rango de fechas y filtros opcionales. GET
-	 * /api/v1/finances/movements?from=YYYY-MM-DD&to=YYYY-MM-DD[&type=INCOME|OUTCOME][&paymentMethod=CASH|CARD|TRANSFER|OTHER]
+	 * /api/v1/finances/movements?from=YYYY-MM-DD&to=YYYY-MM-DD[&status=active|deleted|all][&type=INCOME|OUTCOME][&paymentMethod=CASH|CARD|TRANSFER|OTHER]
 	 */
 	@GetMapping
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS')")
-	public ResponseEntity<List<FinMovementDto>> searchMovements(
+	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS', 'ASISTENTE_GENERAL')")
+	public ResponseEntity<org.springframework.data.domain.Page<FinMovementDto>> searchMovements(
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+			@RequestParam(required = false, defaultValue = "active") String status,
 			@RequestParam(required = false) MovementType type,
-			@RequestParam(required = false) PaymentMethod paymentMethod) {
+			@RequestParam(required = false) PaymentMethod paymentMethod,
+			@RequestParam(required = false) String text,
+			@RequestParam(required = false) BigDecimal minAmount,
+			@RequestParam(required = false) BigDecimal maxAmount,
+			@RequestParam(required = false) java.util.List<String> sort,
+			@RequestParam(required = false, defaultValue = "0") int page,
+			@RequestParam(required = false, defaultValue = "20") int size) {
 
-		List<FinMovementDto> list = finMovementService.searchMovements(from, to, type, paymentMethod);
+		var list = finMovementService.searchMovements(
+				from,
+				to,
+				status,
+				type,
+				paymentMethod,
+				text,
+				minAmount,
+				maxAmount,
+				sort,
+				page,
+				size
+		);
 		return ResponseEntity.ok(list);
+	}
+
+	/**
+	 * Resumen/KPIs de movimientos financieros.
+	 * GET /api/v1/finances/movements/summary?from=YYYY-MM-DD&to=YYYY-MM-DD[&status=active|deleted|all][&type=INCOME|OUTCOME][&paymentMethod=CASH|CARD|TRANSFER|OTHER]
+	 */
+	@GetMapping("/summary")
+	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS', 'ASISTENTE_GENERAL')")
+	public ResponseEntity<FinSummaryDto> getSummary(
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+			@RequestParam(required = false, defaultValue = "active") String status,
+			@RequestParam(required = false) MovementType type,
+			@RequestParam(required = false) PaymentMethod paymentMethod,
+			@RequestParam(required = false) String text,
+			@RequestParam(required = false) BigDecimal minAmount,
+			@RequestParam(required = false) BigDecimal maxAmount) {
+
+		FinSummaryDto summary = finMovementService.getSummary(from, to, status, type, paymentMethod, text, minAmount, maxAmount);
+		return ResponseEntity.ok(summary);
 	}
 
 	/**
 	 * Actualizar movimiento PUT /api/v1/finances/movements/{id}
 	 */
 	@PutMapping("/{id}")
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS')")
+	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS', 'ASISTENTE_GENERAL')")
 	public ResponseEntity<FinMovementDto> updateMovement(@PathVariable UUID id,
 			@Valid @RequestBody UpdateFinMovementRequest request,
 			@AuthenticationPrincipal CustomUserDetails currentUser) {
@@ -81,7 +120,7 @@ public class FinMovementController {
 	 * Borrado lógico del movimiento DELETE /api/v1/finances/movements/{id}
 	 */
 	@DeleteMapping("/{id}")
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS')")
+	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS', 'ASISTENTE_GENERAL')")
 	public ResponseEntity<Void> deleteMovement(@PathVariable UUID id,
 			@AuthenticationPrincipal CustomUserDetails currentUser) {
 
@@ -96,7 +135,7 @@ public class FinMovementController {
 	 * PATCH /api/v1/finances/movements/{id}/restore
 	 */
 	@PatchMapping("/{id}/restore")
-	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS')")
+	@PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'FINANZAS', 'ASISTENTE_GENERAL')")
 	public ResponseEntity<Void> restoreMovement(
 	        @PathVariable UUID id,
 	        @AuthenticationPrincipal CustomUserDetails currentUser) {

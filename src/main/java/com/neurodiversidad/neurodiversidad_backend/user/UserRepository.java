@@ -20,6 +20,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
 	boolean existsByEmailIgnoreCaseAndDeletedAtIsNull(String email);
 
+	boolean existsByUsernameIgnoreCaseAndDeletedAtIsNullAndIdNot(String username, UUID id);
+
+	boolean existsByEmailIgnoreCaseAndDeletedAtIsNullAndIdNot(String email, UUID id);
+
 	Optional<User> findByIdAndDeletedAtIsNull(UUID id);
 
 	@Query("""
@@ -39,10 +43,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 			       OR LOWER(u.email) LIKE LOWER(CONCAT('%', :text, '%'))
 			       OR LOWER(u.username) LIKE LOWER(CONCAT('%', :text, '%'))
 			  )
-			ORDER BY u.name ASC
 			""")
 	List<User> search(@Param("text") String text, @Param("enabled") Boolean enabled,
-			@Param("roleName") String roleName, @Param("deleted") Boolean deleted);
+			@Param("roleName") String roleName, @Param("deleted") Boolean deleted, org.springframework.data.domain.Sort sort);
 
 	@Query("""
 			SELECT DISTINCT u
@@ -55,8 +58,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 			)
 			  AND (:enabled IS NULL OR u.enabled = :enabled)
 			  AND (:roleName IS NULL OR r.name = :roleName)
-			ORDER BY u.name ASC
 			""")
 	List<User> searchWithoutText(@Param("enabled") Boolean enabled,
-			@Param("roleName") String roleName, @Param("deleted") Boolean deleted);
+			@Param("roleName") String roleName, @Param("deleted") Boolean deleted, org.springframework.data.domain.Sort sort);
 }

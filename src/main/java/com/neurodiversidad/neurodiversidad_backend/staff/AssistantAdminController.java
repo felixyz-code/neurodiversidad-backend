@@ -24,7 +24,7 @@ public class AssistantAdminController {
      * Crea un asistente especialista y lo relaciona con especialistas.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH', 'ESPECIALISTA', 'ASISTENTE_ESPECIALISTA')")
     @Operation(summary = "Registra un asistente especialista asociado a especialistas")
     public AssistantDto createAssistant(
             @Valid @RequestBody CreateAssistantRequest request,
@@ -38,7 +38,7 @@ public class AssistantAdminController {
      * Lista asistentes. Si se pasa specialistId, filtra por especialista.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH', 'ESPECIALISTA', 'ASISTENTE_ESPECIALISTA')")
     @Operation(summary = "Lista asistentes (opcionalmente filtrados por especialista)")
     public List<AssistantDto> listAssistants(@RequestParam(required = false) UUID specialistId) {
         return assistantAdminService.listAssistants(specialistId);
@@ -48,7 +48,7 @@ public class AssistantAdminController {
      * Obtiene un asistente por userId.
      */
     @GetMapping("/by-user/{userId}")
-    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH', 'ESPECIALISTA', 'ASISTENTE_ESPECIALISTA')")
     @Operation(summary = "Obtiene un asistente por el ID de usuario")
     public AssistantDto getAssistantByUserId(@PathVariable UUID userId) {
         return assistantAdminService.getAssistantByUserId(userId);
@@ -58,7 +58,7 @@ public class AssistantAdminController {
      * Reemplaza la lista de especialistas asociados a un asistente.
      */
     @PutMapping("/{id}/specialists")
-    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH', 'ESPECIALISTA', 'ASISTENTE_ESPECIALISTA')")
     @Operation(summary = "Actualiza los especialistas asociados a un asistente")
     public AssistantDto updateAssistantSpecialists(
             @PathVariable UUID id,
@@ -73,7 +73,7 @@ public class AssistantAdminController {
      * Lista especialistas asociados a un asistente.
      */
     @GetMapping("/{id}/specialists")
-    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH')")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'RRHH', 'ESPECIALISTA', 'ASISTENTE_ESPECIALISTA')")
     @Operation(summary = "Lista especialistas asociados a un asistente")
     public List<SpecialistDto> listSpecialistsForAssistant(@PathVariable UUID id) {
         return assistantAdminService.listSpecialistsForAssistant(id);

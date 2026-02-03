@@ -36,6 +36,13 @@ public class UserService {
     }
 
     public UserDTO createUser(UserCreateRequest request, UUID createdBy) {
+        if (userRepository.existsByUsernameIgnoreCaseAndDeletedAtIsNull(request.getUsername())) {
+            throw new IllegalArgumentException("Ya existe un usuario activo con ese username");
+        }
+        if (userRepository.existsByEmailIgnoreCaseAndDeletedAtIsNull(request.getEmail())) {
+            throw new IllegalArgumentException("Ya existe un usuario activo con ese email");
+        }
+
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
@@ -57,6 +64,17 @@ public class UserService {
     public UserDTO updateUser(UUID id, UserUpdateRequest request, UUID modifiedBy) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + id));
+
+        if (request.getUsername() != null
+                && !request.getUsername().equalsIgnoreCase(user.getUsername())
+                && userRepository.existsByUsernameIgnoreCaseAndDeletedAtIsNullAndIdNot(request.getUsername(), id)) {
+            throw new IllegalArgumentException("Ya existe un usuario activo con ese username");
+        }
+        if (request.getEmail() != null
+                && !request.getEmail().equalsIgnoreCase(user.getEmail())
+                && userRepository.existsByEmailIgnoreCaseAndDeletedAtIsNullAndIdNot(request.getEmail(), id)) {
+            throw new IllegalArgumentException("Ya existe un usuario activo con ese email");
+        }
 
         user.setName(request.getName());
         user.setEmail(request.getEmail());

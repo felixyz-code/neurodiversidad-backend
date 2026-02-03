@@ -5,15 +5,19 @@ import com.neurodiversidad.neurodiversidad_backend.patient.PatientRepository;
 import com.neurodiversidad.neurodiversidad_backend.patient.PatientNotFoundException;
 import com.neurodiversidad.neurodiversidad_backend.staff.Specialist;
 import com.neurodiversidad.neurodiversidad_backend.staff.SpecialistRepository;
+import com.neurodiversidad.neurodiversidad_backend.util.SortUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -120,7 +124,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     @Transactional(readOnly = true)
     public Page<AppointmentDto> searchAppointments(OffsetDateTime from, OffsetDateTime to, String status,
-            String search, List<UUID> specialistIds, int page, int size) {
+            String search, List<UUID> specialistIds, List<String> sort, int page, int size) {
 
         if (from == null || to == null) {
             throw new IllegalArgumentException("Rango de fechas requerido");
@@ -139,28 +143,119 @@ public class AppointmentServiceImpl implements AppointmentService {
         List<UUID> safeSpecialistIds = (specialistIds == null) ? List.of(new UUID(0L, 0L)) : specialistIds;
         boolean filterBySpecialist = specialistIds != null;
 
+        Sort defaultSort = Sort.by(Sort.Order.asc("startAt"));
+        Sort sortSpec = SortUtils.parseSort(
+                sort,
+                Set.of("startAt", "durationMinutes", "status", "createdAt", "updatedAt"),
+                defaultSort
+        );
+        Sort.Direction statusDirection = resolveStatusSortDirection(sort);
+
         Page<Appointment> results;
         if (normalizedSearch == null) {
-            results = appointmentRepository.searchAppointmentsWithoutSearch(
-                    from,
-                    to,
-                    normalizedStatus,
-                    safeSpecialistIds,
-                    filterBySpecialist,
-                    PageRequest.of(page, size)
-            );
+            if (statusDirection != null) {
+                results = statusDirection == Sort.Direction.DESC
+                        ? appointmentRepository.searchAppointmentsStatusOrderDescWithoutSearch(
+                                from,
+                                to,
+                                normalizedStatus,
+                                safeSpecialistIds,
+                                filterBySpecialist,
+                                PageRequest.of(page, size)
+                        )
+                        : appointmentRepository.searchAppointmentsStatusOrderAscWithoutSearch(
+                                from,
+                                to,
+                                normalizedStatus,
+                                safeSpecialistIds,
+                                filterBySpecialist,
+                                PageRequest.of(page, size)
+                        );
+            } else {
+                results = appointmentRepository.searchAppointmentsWithoutSearch(
+                        from,
+                        to,
+                        normalizedStatus,
+                        safeSpecialistIds,
+                        filterBySpecialist,
+                        PageRequest.of(page, size, sortSpec)
+                );
+            }
         } else {
-            results = appointmentRepository.searchAppointments(
-                    from,
-                    to,
-                    normalizedStatus,
-                    normalizedSearch,
-                    safeSpecialistIds,
-                    filterBySpecialist,
-                    PageRequest.of(page, size)
-            );
+            if (statusDirection != null) {
+                results = statusDirection == Sort.Direction.DESC
+                        ? appointmentRepository.searchAppointmentsStatusOrderDesc(
+                                from,
+                                to,
+                                normalizedStatus,
+                                normalizedSearch,
+                                safeSpecialistIds,
+                                filterBySpecialist,
+                                PageRequest.of(page, size)
+                        )
+                        : appointmentRepository.searchAppointmentsStatusOrderAsc(
+                                from,
+                                to,
+                                normalizedStatus,
+                                normalizedSearch,
+                                safeSpecialistIds,
+                                filterBySpecialist,
+                                PageRequest.of(page, size)
+                        );
+            } else {
+                results = appointmentRepository.searchAppointments(
+                        from,
+                        to,
+                        normalizedStatus,
+                        normalizedSearch,
+                        safeSpecialistIds,
+                        filterBySpecialist,
+                        PageRequest.of(page, size, sortSpec)
+                );
+            }
         }
 
         return results.map(appointmentMapper::toDto);
+    }
+
+    private Sort.Direction resolveStatusSortDirection(List<String> sortParams) {
+        if (sortParams == null || sortParams.isEmpty()) {
+            return null;
+        }
+        for (int i = 0; i < sortParams.size(); i++) {
+            String raw = sortParams.get(i);
+            if (raw == null || raw.isBlank()) {
+                continue;
+            }
+            String[] parts = raw.split(",");
+            String field = parts[0].trim();
+            if (!"status".equals(field)) {
+                continue;
+            }
+            if (parts.length < 2) {
+                // Support legacy pattern: sort=status&sort=asc|desc
+                for (int j = i + 1; j < sortParams.size(); j++) {
+                    String next = sortParams.get(j);
+                    if (next == null || next.isBlank()) {
+                        continue;
+                    }
+                    String nextTrimmed = next.trim().toLowerCase(Locale.ROOT);
+                    if ("desc".equals(nextTrimmed)) {
+                        return Sort.Direction.DESC;
+                    }
+                    if ("asc".equals(nextTrimmed)) {
+                        return Sort.Direction.ASC;
+                    }
+                    break;
+                }
+                return Sort.Direction.ASC;
+            }
+            String dir = parts[1].trim().toLowerCase(Locale.ROOT);
+            if ("desc".equals(dir)) {
+                return Sort.Direction.DESC;
+            }
+            return Sort.Direction.ASC;
+        }
+        return null;
     }
 }

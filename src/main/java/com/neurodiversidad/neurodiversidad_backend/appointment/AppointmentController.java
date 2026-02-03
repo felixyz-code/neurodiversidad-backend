@@ -70,6 +70,7 @@ public class AppointmentController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) List<String> sort,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "20") int size,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
@@ -95,6 +96,7 @@ public class AppointmentController {
                 status,
                 search,
                 allowedSpecialistIds,
+                sort,
                 page,
                 size
         );
@@ -123,7 +125,7 @@ public class AppointmentController {
      * DELETE /api/v1/appointments/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL')")
+    @PreAuthorize("hasAnyRole('DIRECTOR_GENERAL', 'ASISTENTE_GENERAL', 'ESPECIALISTA', 'ASISTENTE_ESPECIALISTA')")
     public ResponseEntity<Void> cancelAppointment(
             @PathVariable UUID id,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
