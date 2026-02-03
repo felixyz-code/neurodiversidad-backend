@@ -1,12 +1,19 @@
 package com.neurodiversidad.neurodiversidad_backend.finance;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.neurodiversidad.neurodiversidad_backend.util.SortUtils;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -89,11 +96,93 @@ public class FinMovementServiceImpl implements FinMovementService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<FinMovementDto> searchMovements(LocalDate from, LocalDate to, MovementType type,
-			PaymentMethod paymentMethod) {
+	public Page<FinMovementDto> searchMovements(LocalDate from, LocalDate to, String status, MovementType type,
+			PaymentMethod paymentMethod, String text, BigDecimal minAmount, BigDecimal maxAmount, List<String> sort,
+			int page, int size) {
 
-		List<FinMovement> result = finMovementRepository.search(from, to, type, paymentMethod);
-		return result.stream().map(finMovementMapper::toDto).toList();
+		String normalizedStatus = normalizeStatus(status);
+		String normalizedText = (text == null || text.isBlank()) ? null : text;
+
+		Sort defaultSort = Sort.by(
+				Sort.Order.desc("movementDate"),
+				Sort.Order.desc("createdAt")
+		);
+		Sort sortSpec = SortUtils.parseSort(
+				sort,
+				Set.of("movementDate", "amount", "createdAt", "type", "paymentMethod", "description"),
+				defaultSort
+		);
+
+		Page<FinMovement> result = finMovementRepository.search(
+				from,
+				to,
+				normalizedStatus,
+				type,
+				paymentMethod,
+				normalizedText,
+				minAmount,
+				maxAmount,
+				PageRequest.of(page, size, sortSpec)
+		);
+
+		return result.map(finMovementMapper::toDto);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public FinSummaryDto getSummary(LocalDate from, LocalDate to, String status, MovementType type,
+			PaymentMethod paymentMethod, String text, BigDecimal minAmount, BigDecimal maxAmount) {
+
+		String normalizedStatus = normalizeStatus(status);
+		String normalizedText = (text == null || text.isBlank()) ? null : text;
+
+		Object summary = finMovementRepository.summarize(
+				from,
+				to,
+				normalizedStatus,
+				type,
+				paymentMethod,
+				normalizedText,
+				minAmount,
+				maxAmount
+		);
+
+		Object[] row = null;
+		if (summary instanceof Object[] summaryRow) {
+			row = summaryRow;
+			if (row.length == 1 && row[0] instanceof Object[] nested) {
+				row = nested;
+			}
+		}
+
+		BigDecimal income = BigDecimal.ZERO;
+		BigDecimal outcome = BigDecimal.ZERO;
+		if (row != null) {
+			if (row.length > 0 && row[0] instanceof Number n0) {
+				income = (n0 instanceof BigDecimal bd) ? bd : BigDecimal.valueOf(n0.doubleValue());
+			}
+			if (row.length > 1 && row[1] instanceof Number n1) {
+				outcome = (n1 instanceof BigDecimal bd) ? bd : BigDecimal.valueOf(n1.doubleValue());
+			}
+		}
+		BigDecimal balance = income.subtract(outcome);
+
+		return FinSummaryDto.builder()
+				.totalIncome(income)
+				.totalOutcome(outcome)
+				.balance(balance)
+				.build();
+	}
+
+	private String normalizeStatus(String status) {
+		if (status == null || status.isBlank()) {
+			return "active";
+		}
+		String normalized = status.trim().toLowerCase();
+		return switch (normalized) {
+			case "active", "deleted", "all" -> normalized;
+			default -> throw new IllegalArgumentException("status inválido: " + status);
+		};
 	}
 
 	@Override

@@ -1,8 +1,11 @@
 package com.neurodiversidad.neurodiversidad_backend.finance;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
 
 public interface FinMovementService {
 
@@ -14,7 +17,30 @@ public interface FinMovementService {
 
 	FinMovementDto getMovementById(UUID id);
 
-	List<FinMovementDto> searchMovements(LocalDate from, LocalDate to, MovementType type, PaymentMethod paymentMethod);
+    Page<FinMovementDto> searchMovements(
+            LocalDate from,
+            LocalDate to,
+            String status,
+            MovementType type,
+            PaymentMethod paymentMethod,
+            String text,
+            BigDecimal minAmount,
+            BigDecimal maxAmount,
+            java.util.List<String> sort,
+            int page,
+            int size
+    );
+
+    FinSummaryDto getSummary(
+            LocalDate from,
+            LocalDate to,
+            String status,
+            MovementType type,
+            PaymentMethod paymentMethod,
+            String text,
+            BigDecimal minAmount,
+            BigDecimal maxAmount
+    );
 	
 	void restoreMovement(UUID id, UUID currentUserId);
 }

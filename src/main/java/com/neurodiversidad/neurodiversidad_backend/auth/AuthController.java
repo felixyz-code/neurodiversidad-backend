@@ -1,10 +1,12 @@
 package com.neurodiversidad.neurodiversidad_backend.auth;
 
 import com.neurodiversidad.neurodiversidad_backend.security.JwtService;
+import com.neurodiversidad.neurodiversidad_backend.security.CustomUserDetails;
 import com.neurodiversidad.neurodiversidad_backend.user.User;
 import com.neurodiversidad.neurodiversidad_backend.user.UserDTO;
 import com.neurodiversidad.neurodiversidad_backend.user.UserMapper;
 import com.neurodiversidad.neurodiversidad_backend.user.UserRepository;
+import java.time.OffsetDateTime;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -44,9 +47,18 @@ public class AuthController {
 		String token = jwtService.generateToken(principal);
 
 		User user = userRepository.findByUsernameIgnoreCaseAndDeletedAtIsNull(principal.getUsername()).orElseThrow();
+		user.setLastLoginAt(OffsetDateTime.now());
+		userRepository.save(user);
 
 		UserDTO userDTO = UserMapper.toDTO(user);
 
 		return new LoginResponse(token, expirationMs, userDTO);
+	}
+
+	@GetMapping("/me")
+	@Operation(summary = "Devuelve el perfil del usuario autenticado")
+	public UserDTO me(@AuthenticationPrincipal CustomUserDetails currentUser) {
+		User user = userRepository.findByIdAndDeletedAtIsNull(currentUser.getId()).orElseThrow();
+		return UserMapper.toDTO(user);
 	}
 }

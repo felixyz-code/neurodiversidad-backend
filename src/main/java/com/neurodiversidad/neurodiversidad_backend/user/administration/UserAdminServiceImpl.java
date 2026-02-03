@@ -9,12 +9,15 @@ import com.neurodiversidad.neurodiversidad_backend.user.Role;
 import com.neurodiversidad.neurodiversidad_backend.user.RoleRepository;
 import com.neurodiversidad.neurodiversidad_backend.user.User;
 import com.neurodiversidad.neurodiversidad_backend.user.UserRepository;
+import com.neurodiversidad.neurodiversidad_backend.util.SortUtils;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.data.domain.Sort;
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -85,10 +88,18 @@ public class UserAdminServiceImpl implements UserAdminService {
         }
 
         if (request.getEmail() != null) {
+            if (!request.getEmail().equalsIgnoreCase(user.getEmail())
+                    && userRepository.existsByEmailIgnoreCaseAndDeletedAtIsNullAndIdNot(request.getEmail(), id)) {
+                throw new IllegalArgumentException("Ya existe un usuario activo con ese email");
+            }
             user.setEmail(request.getEmail());
         }
 
         if (request.getUsername() != null) {
+            if (!request.getUsername().equalsIgnoreCase(user.getUsername())
+                    && userRepository.existsByUsernameIgnoreCaseAndDeletedAtIsNullAndIdNot(request.getUsername(), id)) {
+                throw new IllegalArgumentException("Ya existe un usuario activo con ese username");
+            }
             user.setUsername(request.getUsername());
         }
 
@@ -156,12 +167,85 @@ public class UserAdminServiceImpl implements UserAdminService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserAdministrationDTO> searchUsers(String text, Boolean enabled, String roleName) {
-        List<User> users = userRepository.search(
-                (text != null && !text.isBlank()) ? text : null,
-                enabled,
-                (roleName != null && !roleName.isBlank()) ? roleName : null
+    public List<UserAdministrationDTO> searchUsers(String text, Boolean enabled, String roleName, String status,
+            List<String> sort) {
+        String normalizedStatus = status == null ? null : status.trim().toLowerCase();
+        Boolean deleted = null;
+
+        if ("active".equals(normalizedStatus)) {
+            deleted = Boolean.FALSE;
+            enabled = Boolean.TRUE;
+        } else if ("inactive".equals(normalizedStatus)) {
+            deleted = Boolean.FALSE;
+            enabled = Boolean.FALSE;
+        } else if ("deleted".equals(normalizedStatus)) {
+            deleted = Boolean.TRUE;
+            enabled = null;
+        } else {
+            deleted = Boolean.FALSE;
+        }
+
+        Sort defaultSort = Sort.by(Sort.Order.asc("name"));
+        Sort sortSpec = SortUtils.parseSort(
+                sort,
+                Set.of("name", "email", "username", "enabled", "createdAt", "updatedAt", "lastLoginAt"),
+                defaultSort
         );
+
+        List<User> users;
+        if (text != null && !text.isBlank()) {
+            users = userRepository.search(
+                    text,
+                    enabled,
+                    (roleName != null && !roleName.isBlank()) ? roleName : null,
+                    deleted,
+                    sortSpec
+            );
+        } else {
+            users = userRepository.searchWithoutText(
+                    enabled,
+                    (roleName != null && !roleName.isBlank()) ? roleName : null,
+                    deleted,
+                    sortSpec
+            );
+        }
         return users.stream().map(userAdminMapper::toDto).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserIdNameDTO> resolveUsersByIds(List<UUID> userIds) {
+        List<User> users = userRepository.findAllById(userIds);
+        return users.stream()
+                .map(user -> UserIdNameDTO.builder()
+                        .id(user.getId())
+                        .name(user.getName())
+                        .username(user.getUsername())
+                        .build())
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserAvailabilityDTO checkAvailability(String username, String email, UUID excludeId) {
+        boolean usernameAvailable = true;
+        boolean emailAvailable = true;
+
+        if (username != null && !username.isBlank()) {
+            usernameAvailable = excludeId == null
+                    ? !userRepository.existsByUsernameIgnoreCaseAndDeletedAtIsNull(username)
+                    : !userRepository.existsByUsernameIgnoreCaseAndDeletedAtIsNullAndIdNot(username, excludeId);
+        }
+
+        if (email != null && !email.isBlank()) {
+            emailAvailable = excludeId == null
+                    ? !userRepository.existsByEmailIgnoreCaseAndDeletedAtIsNull(email)
+                    : !userRepository.existsByEmailIgnoreCaseAndDeletedAtIsNullAndIdNot(email, excludeId);
+        }
+
+        return UserAvailabilityDTO.builder()
+                .usernameAvailable(usernameAvailable)
+                .emailAvailable(emailAvailable)
+                .build();
     }
 }

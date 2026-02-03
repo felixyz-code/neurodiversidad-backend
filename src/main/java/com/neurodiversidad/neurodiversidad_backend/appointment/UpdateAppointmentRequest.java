@@ -1,6 +1,7 @@
 package com.neurodiversidad.neurodiversidad_backend.appointment;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Max;
@@ -22,4 +23,7 @@ public class UpdateAppointmentRequest {
 	private String notes;
 
 	private String status;
+
+	// Opcional: cambiar especialista asignado
+	private UUID specialistId;
 }

@@ -8,6 +8,8 @@ target/
 logs/
 hs_err_pid*
 replay_pid*
+.env
+.env.*
 
 ###############################################
 #   SPRING BOOT (evitar subir configuraciones sensibles)
